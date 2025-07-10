@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Levenshtein Distance Calculator</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #020e14 0%, #414345 100%);
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: rgba(40, 44, 52, 0.32);
+            padding: 2.5rem 2rem;
+            border-radius: 24px;
+            backdrop-filter: blur(10rem) saturate(120%);
+            -webkit-backdrop-filter: blur(10rem) saturate(120%);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+            text-align: center;
+            width: 90%;
+            max-width: 80vh;
+            transition: box-shadow 0.3s;
+        }
+
+        .container:hover {
+            box-shadow: 0 20px 40px 0 rgba(67, 60, 31, 0.3);
+        }
+
+        input {
+            padding: 0.7rem;
+            margin: 0.7rem 0.5rem;
+            width: 220px;
+            border: 1.5px solid #d1bfa7;
+            border-radius: 10px;
+            background: rgba(60, 60, 70, 0.25);
+            font-size: 1rem;
+            transition: border 0.2s;
+            color: #f3e9e1;
+        }
+
+        input:focus {
+            outline: none;
+            border: 1.5px solid #bfa77e;
+            background: rgba(60, 60, 70, 0.35);
+            color: #fff;
+        }
+
+        button {
+            padding: 0.7rem 1.5rem;
+            background: linear-gradient(90deg, #e7d6d6 0%, #d1bfa7 100%);
+            color: #4b3a1e;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 1.2rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.07);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #f3e9e1 0%, #e7d6d6 100%);
+            color: #dbb271;
+        }
+
+        #matrix-output {
+            margin-top: 2rem;
+            animation: fadeIn 0.8s ease-in-out;
+            overflow-x: auto;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+
+        td,
+        th {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #2d2f36;
+            color: #e4be8d;
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.04);
+            color: #f3e9e1;
+        }
+
+        h2 {
+            color: #e7d6d6;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+            font-size: 2.1rem;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(31, 38, 135, 0.04);
+        }
+
+        h3 {
+            margin-top: 1rem;
+            color: #e7d6d6;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body onload="document.getElementById('str1').focus();">
+    <div class="container">
+        <h2>Levenshtein Distance Calculator</h2>
+        <input type="text" id="str1" placeholder="Enter first string" />
+        <input type="text" id="str2" placeholder="Enter second string" />
+        <br />
+        <button onclick="calculate()">Calculate</button>
+
+        <div id="matrix-output"></div>
+        <div id="result"></div>
+
+        <button onclick="reset()" id="resetBtn" style="display:none;">Try Again</button>
+    </div>
+
+    <script>
+        function calculate() {
+
+            // Levenshtein distance algorithm.
+
+            const str1 = document.getElementById("str1").value;
+            const str2 = document.getElementById("str2").value;
+
+            if (!str1 || !str2) {
+                alert("Please enter both strings.");
+                return;
+            }
+
+            const m = str1.length;
+            const n = str2.length;
+            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+            for (let i = 0; i <= m; i++) dp[i][0] = i;
+            for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (str1[i - 1] === str2[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        dp[i][j] = 1 + Math.min(
+                            dp[i - 1][j],     // delete
+                            dp[i][j - 1],     // insert
+                            dp[i - 1][j - 1]  // replace
+                        );
+                    }
+                }
+            }
+
+            // Build the matrix table with headers;
+            const table = document.createElement("table");
+
+            // First row: top header (str2 chars);
+            const headerRow = document.createElement("tr");
+            headerRow.appendChild(document.createElement("th")); // top-left corner.
+
+            for (let j = 0; j <= n; j++) {
+                const th = document.createElement("th");
+                th.textContent = j === 0 ? 'ε' : str2[j - 1];
+                headerRow.appendChild(th);
+            }
+            table.appendChild(headerRow);
+
+            // Remaining rows with str1 char on the left.
+            for (let i = 0; i <= m; i++) {
+                const row = document.createElement("tr");
+
+                const rowLabel = document.createElement("th");
+                rowLabel.textContent = i === 0 ? 'ε' : str1[i - 1];
+                row.appendChild(rowLabel);
+
+                for (let j = 0; j <= n; j++) {
+                    const cell = document.createElement("td");
+                    cell.textContent = dp[i][j];
+                    row.appendChild(cell);
+                }
+
+                table.appendChild(row);
+            }
+
+            const matrixOutput = document.getElementById("matrix-output");
+            matrixOutput.innerHTML = "";
+            matrixOutput.appendChild(table);
+
+            document.getElementById("result").innerHTML = `<h3>Minimum Edit Distance = ${dp[m][n]}</h3>`;
+            document.getElementById("resetBtn").style.display = "inline-block";
+        }
+
+        function reset() {
+            document.getElementById("str1").value = "";
+            document.getElementById("str2").value = "";
+            document.getElementById("matrix-output").innerHTML = "";
+            document.getElementById("result").innerHTML = "";
+            document.getElementById("resetBtn").style.display = "none";
+            document.getElementById("str1").focus();
+        }
+
+        // Allow pressing Enter in either input to trigger calculation.
+        // In str1
+        document.getElementById('str1').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                document.getElementById('str2').focus();
+                e.preventDefault();
+            }
+        });
+        // In str2
+        document.getElementById('str2').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') calculate();
+        });
+    </script>
+</body>
+
+</html>
